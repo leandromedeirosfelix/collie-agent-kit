@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "collie": {
+      "command": "node",
+      "args": ["${CLAUDE_PLUGIN_ROOT}/server/collie-mcp.mjs"],
+      "env": {
+        "MSR_URL": "${MSR_URL:-https://app.colliesr.com}",
+        "MSR_TOKEN": "${MSR_TOKEN:-}"
+      }
+    }
+  }
+}
