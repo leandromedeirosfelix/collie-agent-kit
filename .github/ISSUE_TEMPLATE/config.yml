@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Collie account or review questions
+    url: https://colliesr.com
+    about: For questions about your Collie account, plan or reviews, write to contact@colliesr.com.
+  - name: Report a security vulnerability
+    url: https://github.com/leandromedeirosfelix/collie-agent-kit/blob/main/SECURITY.md
+    about: Please report vulnerabilities privately to contact@colliesr.com, never in a public issue.

@@ -6,7 +6,7 @@
     {
       "name": "collie",
       "description": "Systematic review + meta-analysis workflow for Collie: viability, search, AI-assisted screening, extraction, RoB, R meta-analysis, GRADE, PRISMA, manuscript",
-      "version": "0.4.0",
+      "version": "0.4.1",
       "source": "./",
       "author": { "name": "CollieSR Company", "email": "contact@colliesr.com" }
     }

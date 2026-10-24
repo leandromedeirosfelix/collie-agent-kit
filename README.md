@@ -20,7 +20,8 @@
   <a href="docs/install-claude-code.md">Claude Code</a> ·
   <a href="docs/install-manual.md">Other clients</a> ·
   <a href="docs/troubleshooting.md">Troubleshooting</a> ·
-  <a href="docs/security.md">Security</a>
+  <a href="docs/security.md">Security</a> ·
+  <a href="docs/developers/README.md">Developers</a>
 </p>
 
 ---
@@ -217,10 +218,25 @@ More: [docs/security.md](docs/security.md).
 
 Full list: [docs/troubleshooting.md](docs/troubleshooting.md).
 
+## For developers
+
+The [developer documentation](docs/developers/README.md) covers how the kit works and how to build on it:
+
+- [Architecture](docs/developers/architecture.md): the server, the plugin layers, what runs where, and the human-in-the-loop guarantees.
+- [Authentication](docs/developers/authentication.md): the code sign-in, tokens, scopes and revoking.
+- [Tools reference](docs/developers/tools-reference.md): every MCP tool with its parameters, generated from the server.
+- [Skills and subagents](docs/developers/skills-and-agents.md), [hooks and the Collie pane](docs/developers/hooks-and-pane.md).
+- [Integrating other clients](docs/developers/integrating-other-clients.md): any stdio MCP client, or your own TypeScript or Python code.
+- [Versioning](docs/developers/versioning.md).
+
+Contributions are welcome: see [CONTRIBUTING.md](CONTRIBUTING.md). Report vulnerabilities privately as [SECURITY.md](SECURITY.md) describes.
+
 ## Support
 
 Write to [contact@colliesr.com](mailto:contact@colliesr.com).
 
 ## License
 
-Proprietary. Copyright (c) 2026 CollieSR Company. All rights reserved. You may install and use this kit only to connect to Collie under its Terms of Use. See [LICENSE](LICENSE). Open-source components in the server bundle: [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).
+The agent kit is open source under the [MIT License](LICENSE). Copyright (c) 2026 CollieSR Company. Open-source components in the server bundle: [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).
+
+The Collie service ([app.colliesr.com](https://app.colliesr.com)) and the method guides it serves through `collie_guide` are not part of the kit. They are governed by Collie's [Terms of Use](https://colliesr.com/terms.html).
