@@ -166,10 +166,10 @@ All clients, step by step: [docs/install-manual.md](docs/install-manual.md).
 | Part | What it does | Where |
 |---|---|---|
 | MCP server | Collie's tools for your agent: reviews, protocol, search, duplicates, screening, full text, extraction, risk of bias, analysis, GRADE, PRISMA | Every client |
-| 13 skills | One per stage of a review, plus help. Start with `collie-workflow` | Claude Code |
+| 17 skills | One per stage of a review, plus help, a manuscript check, an evidence transcript, an improvement retro and a read-only bridge to your local Zotero collection. Start with `collie-workflow` | Claude Code |
 | 8 subagents | Methodologist, search strategist, screener, extractor, risk-of-bias assessor, biostatistician, manuscript writer, peer reviewer | Claude Code |
 | Live pane | `/collie`: connection, the active review's stages with progress bars, AI suggestions waiting for you, your agent's recent Collie calls. The status line shows the review and screening progress | Claude Code |
-| Guardrail hooks | Ask you before the agent casts a real screening vote or installs R packages; check the syntax of `.R` files it edits; report the Collie connection at session start | Claude Code |
+| Guardrail hooks | Ask you before the agent casts a real screening vote or installs R packages; keep Collie subagents on Collie's tools; check the syntax of `.R` files and warn about manuscript problems after edits; count Collie tool errors in a local log that never leaves your computer; report the Collie connection at session start | Claude Code |
 
 Skills and subagents are short stubs. Each one asks Collie for its full instructions with the `collie_guide` tool, which answers only for a signed-in account.
 

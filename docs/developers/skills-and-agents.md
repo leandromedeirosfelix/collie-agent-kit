@@ -1,6 +1,6 @@
 # Skills and subagents
 
-The Claude Code plugin ships 13 skills and 8 subagents. They are short stubs: each one asks Collie for its full instructions with the `collie_guide` tool and follows them. The method lives in Collie, so it stays current without a plugin update, and the kit itself contains no review method.
+The Claude Code plugin ships 17 skills and 8 subagents. They are short stubs: each one carries one line of Collie's hard rules and asks Collie for its full instructions with the `collie_guide` tool and follows them. The method lives in Collie, so it stays current without a plugin update, and the kit itself contains no review method.
 
 ## How a stub works
 
@@ -15,6 +15,8 @@ description: Use when the user wants to pool studies or run a meta-analysis in C
 # Statistics
 
 Plans and runs the meta-analysis in R through Collie and interprets the results.
+
+**Hard rules** (guide `collie-rules`, first in every `collie_guide` result) override everything: Collie tools only, for what they support; ...
 
 Before doing anything, call the `collie_guide` tool with name `collie-statistics` and follow the returned guide exactly.
 If it fails, tell the user to connect Collie (`collie_connect`) and retry.
@@ -44,7 +46,11 @@ A subagent stub (`agents/<name>.md`) works the same way. Its frontmatter also se
 | `collie-figures` | Produces publication figures: forest, funnel, risk-of-bias and PRISMA flow. |
 | `collie-ask-data` | Answers questions across the review's articles, citing only the review's references. |
 | `collie-manuscript` | Drafts manuscript sections and the PRISMA 2020 checklist from Collie data, with placeholders for anything missing. |
+| `collie-manuscript-check` | Checks a manuscript drafted from Collie against Collie's own numbers, with the kit's local, offline checker (the `check-manuscript` hook). Fixes only from Collie data; never edits Collie. |
+| `collie-evidence-transcript` | Builds a read-only, verbatim and page-cited evidence transcript of the review (Markdown, optional CSV of quote rows) for peer reviewers, supplements or audits. |
 | `collie-submission` | Prepares the journal submission package, cover letter and responses to peer reviewers. |
+| `collie-retro` | Proposes improvements to the Collie agent from counts only (the local feedback log, AI suggestion and extraction outcomes, the audit log), each for a human to approve. Never edits guides, hooks, skills or review data. |
+| `collie-zotero` | Uses one collection of your local Zotero 7 library as known studies (`search_validate`) or as citation-searching candidates (`citation_import`). Read-only; Zotero on this computer only. |
 | `collie-help` | Answers how-to questions about Collie from its help center. |
 
 ## Subagents
@@ -53,14 +59,14 @@ A subagent stub (`agents/<name>.md`) works the same way. Its frontmatter also se
 |---|---|---|---|
 | `collie-methodologist` | opus | Question, criteria, protocol and the viability verdict. | `protocol_set` |
 | `collie-search-strategist` | sonnet | Builds, debugs, validates and ports the search. | None (read and search tools only) |
-| `collie-screener` | sonnet | Screens undecided records and writes AI suggestions with justifications. | `ai_suggest`, `ai_screen_run`, `relevance_compute`, `criteria_set` (only with criteria the user approved) |
+| `collie-screener` | sonnet | Screens undecided records and writes AI suggestions with justifications. | `ai_suggest`, `ai_screen_run`, `relevance_compute` |
 | `collie-extractor` | sonnet | Extracts question answers, Table 1 and arm-level outcome data with sources. | `ai_extraction_put`, `outcome_data_put` |
 | `collie-rob-assessor` | sonnet | Drafts risk-of-bias assessments and a GRADE proposal. | `rob_assess`, `rob_plots` |
-| `collie-biostatistician` | opus | Chooses the model, runs analyses in R and writes the results text. | `outcome_analyze`, `analysis_run` |
-| `collie-manuscript-writer` | sonnet | Drafts manuscript sections strictly from Collie data. | `outcome_analyze` (and local files) |
+| `collie-biostatistician` | opus | Chooses the model, runs analyses (including network meta-analyses) in R and writes the results text. | `outcome_analyze`, `analysis_run`, `nma_analyze`, `nma_run` |
+| `collie-manuscript-writer` | sonnet | Drafts manuscript sections strictly from Collie data. | `paper_section_put` (drafts), `outcome_analyze` (and local files) |
 | `collie-peer-reviewer` | opus | A read-only pre-submission audit: PRISMA compliance, number consistency, statistical red flags. | None |
 
-The exact tool list of each subagent is in its frontmatter in [`agents/`](../../agents/). No subagent can call `screening_decide`.
+The exact tool list of each subagent is in its frontmatter in [`agents/`](../../agents/). No subagent can call `screening_decide`. In Claude Code the `collie-agent-guard` hook also blocks, inside any `collie-*` subagent, every tool outside Collie's tools and local file tools (see [Hooks](hooks-and-pane.md)).
 
 ## Write your own
 

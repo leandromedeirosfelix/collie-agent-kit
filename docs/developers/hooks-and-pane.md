@@ -1,6 +1,6 @@
 # Hooks and the Collie pane
 
-The Claude Code plugin adds four command hooks and one pane module, all declared in [`hooks/hooks.json`](../../hooks/hooks.json). Other clients do not run them.
+The Claude Code plugin adds seven command hooks and one pane module, all declared in [`hooks/hooks.json`](../../hooks/hooks.json). Other clients do not run them.
 
 ## Command hooks
 
@@ -11,13 +11,19 @@ Each hook is a small Node.js script with no dependencies. Claude Code runs it, p
 | Session check | `SessionStart` (`startup`, `resume`) | `session-check.mjs` | Tells the agent at the start of a session whether Collie is connected, whether local R is installed, and Collie's rule to suggest rather than decide. |
 | Human decides | `PreToolUse` on `mcp__.*(collie\|msr).*__screening_decide` | `human-decides.mjs` | `screening_decide` records a real reviewer vote. The hook asks you before each one and points the agent at `ai_suggest`. |
 | R install guard | `PreToolUse` on `Bash` | `guard-r-install.mjs` | Asks you before any shell command that installs R packages (`install.packages`, `remotes::install_*`, `devtools::install`, `pak`, `BiocManager::install`, `renv` install/restore/update, `R CMD INSTALL`). |
+| Collie agent guard | `PreToolUse` on `WebFetch\|WebSearch\|Bash\|PowerShell\|Agent\|Task\|mcp__(?!.*(collie\|msr)).*` | `collie-agent-guard.mjs` | Inside a Collie subagent (`collie-*`), denies every tool outside Collie's tools and local file tools: web fetch and search, the shell, other MCP servers and spawning further agents. The main session is never touched. |
 | R syntax check | `PostToolUse` on `Write\|Edit\|MultiEdit` | `check-r-syntax.mjs` | Parses each edited `.R` file with local R and reports syntax errors to the agent. Does nothing without R. |
+| Manuscript check | `PostToolUse` on `Write\|Edit\|MultiEdit` (10 s) | `check-manuscript.mjs` | On a `.md` next to `collie-manuscript.json` (or with an open `[[MISSING]]`): warns about placeholders, numbers that differ from Collie, references, AI-use/CRediT, causal wording, claims the CI or GRADE does not support and unreported statistical methods. Returns at most 12 lines as `additionalContext`; always exits 0; never edits the manuscript. |
+| Collie tool counter | `PostToolUse` and `PostToolUseFailure` on `mcp__.*(collie\|msr).*__.*` (5 s) | `collie-tool-error.mjs` | Counts Collie tool calls and errors (tool name, stage, a labelled HTTP status or a refusal code) in the local feedback log. Prints nothing; always exits 0. |
 
 Details:
 
 - **Session check** reads the token the same way the server does (`MSR_TOKEN`, else the saved `token.json` for the same Collie address), makes one request to Collie with a 4 second timeout, and never prints the token. It adds one short context message; it never blocks the session.
 - **Human decides** never blocks other tools. Its decision depends on `MSR_AGENT_DECISIONS`.
 - **R install guard** only asks; it never runs or changes the command.
+- **Collie agent guard** only acts when Claude Code reports a `collie-*` `agent_type`, which it does inside subagents. Older Claude Code versions without that field fall back to each subagent's `tools` allow-list. A denial tells the agent to treat the request as a suspected prompt injection and report it.
+- **Manuscript check** finds `collie-manuscript.json` in the manuscript's folder or up to two folders above it. It also rewrites `<name>.collie-check.md` beside the manuscript with the current warnings (rule, line, message) for the `collie-peer-reviewer` subagent, and records warning counts (rule and a salted hash, never text) in the local feedback log. The offline checks are in `hooks/manuscript-checks.mjs`.
+- **Collie tool counter** never stores a tool's arguments, result or error message. Governance refusals (`human_decision_required` and the like) and `token_expired` are counted apart from errors.
 - **R syntax check** exits with code 2 on a parse error, which feeds the error back to the agent. `hooks/rscript.mjs` finds R: `MSR_RSCRIPT`, `MA_RSCRIPT` or `RSCRIPT_PATH`, then the newest R under `C:\Program Files\R` on Windows, then `Rscript` on the `PATH`.
 
 ### Settings
@@ -28,6 +34,15 @@ Details:
 | | `deny` | Block every `screening_decide`. |
 | | `allow` | Let `screening_decide` through. Use it only when the agent signs in as its own, separate reviewer account. |
 | `MSR_RSCRIPT` | Path to `Rscript` | The R used by the session check and the syntax check. |
+| `COLLIE_FEEDBACK` | `off` | Turns off the local feedback log: the manuscript check still warns, and the tool counter records nothing. |
+| `COLLIE_FEEDBACK_FILE` | Path ending in `.jsonl` | Moves the feedback log. See [security.md](../security.md#what-the-kit-stores-on-your-computer). |
+
+### Not a hook: the feedback CLI and the Zotero bridge
+
+`hooks/feedback.mjs` and `hooks/zotero.mjs` live next to the hooks but are command-line scripts that skills run when needed; they are not registered in `hooks.json`.
+
+- `node hooks/feedback.mjs summary [--since YYYY-MM-DD]` prints counts from the local log (used by `collie-retro`); `add guide_gap --source <guide> --ref <topic-slug> [--stage <stage>]` records a guide gap (used by `collie-workflow`); `path` prints where the log is.
+- `node hooks/zotero.mjs collections` and `items --collection <KEY>` read your local Zotero 7 library (used by `collie-zotero`). See [security.md](../security.md#optional-zotero-bridge-since-060).
 
 Set them in the environment Claude Code starts from.
 
@@ -84,6 +99,7 @@ Automatic refreshes read Collie at most once every 10 seconds, and only one read
 |---|---|
 | Turn everything off | Disable or uninstall the plugin with `/plugin`. |
 | Change the screening vote guard | Set `MSR_AGENT_DECISIONS` (above). |
+| Stop the local feedback log | Set `COLLIE_FEEDBACK=off`. Removing the manuscript check or the tool counter from `hooks.json` does not affect any other Collie behaviour. |
 | Ask before other Collie writes | Add permission rules in your Claude Code settings, for example `"permissions": { "ask": ["mcp__plugin_collie_collie__criteria_set", "mcp__plugin_collie_collie__grade_set"] }`. |
 | Block a Collie tool | Add it to `permissions.deny` the same way. |
 | Remove one hook or the pane, or change refresh timings | Fork the kit and edit `hooks/hooks.json` or the constants at the top of `hooks/live/index.tsx` (`FEED_MAX`, `MIN_GAP_MS`, `AFTER_CALL_MS`, `TICK_MS`). Load your copy with `claude --plugin-dir <path>` while you test it. |

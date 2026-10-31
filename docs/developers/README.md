@@ -18,7 +18,7 @@ The kit holds no review method and no review data. Collie serves its method guid
 | [Architecture](architecture.md) | See how the server, the plugin layers and the Collie service fit together, what runs where, and how the kit keeps a human in charge. |
 | [Authentication](authentication.md) | Understand the code sign-in, where the token lives, personal access tokens, token scopes and revoking. |
 | [Tools reference](tools-reference.md) | Look up every MCP tool: description, parameters, and whether it reads or writes. Generated from the server. |
-| [Skills and subagents](skills-and-agents.md) | See the 13 skills and 8 subagents, how their stubs load Collie's guides, and how to write your own. |
+| [Skills and subagents](skills-and-agents.md) | See the 17 skills and 8 subagents, how their stubs load Collie's guides, and how to write your own. |
 | [Hooks and the Collie pane](hooks-and-pane.md) | Learn what each Claude Code hook guards, how the pane reads Collie, and how to adjust them. |
 | [Integrating other clients](integrating-other-clients.md) | Run the server from any stdio MCP client, or from your own TypeScript or Python code. |
 | [Versioning](versioning.md) | Understand version numbers, the changelog, and compatibility with the Collie service. |

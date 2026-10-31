@@ -1,6 +1,6 @@
 {
   "name": "collie-agent-kit",
-  "version": "0.4.1",
+  "version": "0.6.0",
   "description": "Connect your own AI agent to Collie, the systematic review and meta-analysis workbench: the Collie MCP server plus a Claude Code plugin.",
   "type": "module",
   "private": false,
