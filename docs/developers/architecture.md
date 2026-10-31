@@ -38,7 +38,7 @@ flowchart LR
 | Remote | `https://app.colliesr.com`, or `MSR_URL` |
 | Started by | `npx -y github:leandromedeirosfelix/collie-agent-kit` (any client), or `node ${CLAUDE_PLUGIN_ROOT}/server/collie-mcp.mjs` (the plugin's [`.mcp.json`](../../.mcp.json)) |
 
-The server is generated from Collie's private source and published here as a build artifact. It is stateless apart from the saved token: every tool call is a request to Collie, so what the agent sees is always Collie's current data.
+The server is generated from Collie's private source and published here as a build artifact. It is stateless apart from the saved token (the plugin's hooks also keep the local feedback log described in [security.md](../security.md#what-the-kit-stores-on-your-computer)): every tool call is a request to Collie, so what the agent sees is always Collie's current data.
 
 Behaviour you can rely on:
 
@@ -56,9 +56,13 @@ In Claude Code the same server is wrapped in a plugin. The layers:
 |---|---|---|
 | Manifest | `.claude-plugin/plugin.json`, `.claude-plugin/marketplace.json` | Plugin metadata and the marketplace entry used by `/plugin install`. |
 | MCP server | `.mcp.json`, `server/` | Starts the bundled server with `MSR_URL` and `MSR_TOKEN` from your environment. Tools appear as `mcp__plugin_collie_collie__<tool>`. |
-| Skills | `skills/*/SKILL.md` | 13 short stubs. Each tells the agent to fetch its full guide with `collie_guide`. |
-| Subagents | `agents/*.md` | 8 stubs with a model and an allow-list of Collie tools. Each fetches its guide with `collie_guide`. |
-| Command hooks | `hooks/hooks.json`, `hooks/*.mjs` | Session check, a guard before real screening votes, a guard before R package installs, and an R syntax check. |
+| Skills | `skills/*/SKILL.md` | 17 short stubs. Each carries one line of Collie's hard rules and tells the agent to fetch its full guide with `collie_guide`. |
+| Subagents | `agents/*.md` | 8 stubs with a model and an allow-list of Collie tools. Each carries the hard-rules line and fetches its guide with `collie_guide`. |
+| Command hooks | `hooks/hooks.json`, `hooks/*.mjs` | 7 hooks: session check, a guard before real screening votes, a guard before R package installs, a guard that keeps Collie subagents on Collie's tools, an R syntax check, a warn-only manuscript check, and a counter of Collie tool calls and errors. |
+| Feedback log | `hooks/feedback.mjs` | The local event log the hooks write to, plus a CLI (`add guide_gap`, `summary`, `path`). Opens no connection. |
+| Manuscript checks | `hooks/manuscript-checks.mjs` | Pure, offline text checks used by the manuscript check hook. |
+| Zotero bridge | `hooks/zotero.mjs` | Read-only Zotero 7 local API client (Node built-ins only; `node:http` with `agent: false`, host pinned to `127.0.0.1:23119`, GET, no redirect; per request 20 MB, 10 s idle and 30 s overall) with the CLI commands `collections` and `items --collection <KEY>`. Not registered in `hooks.json`: it runs only when the `collie-zotero` skill calls it. |
+| Tests | `tests/node/*.test.mjs` | Dependency-free tests for the feedback log, the manuscript checks and the Zotero bridge: `node --test "tests/node/*.test.mjs"`. |
 | Pane module | `hooks/live/`, `types/index.d.ts` | The `/collie` pane and the status line. It watches the agent's Collie calls and reads review counts. |
 
 Details: [Skills and subagents](skills-and-agents.md), [Hooks and the Collie pane](hooks-and-pane.md).
@@ -71,12 +75,15 @@ Other clients get the MCP server only. They still receive the server's instructi
 |---|---|
 | The MCP server process and the saved token | Your reviews, records, decisions, extracted data and assessments |
 | The plugin's hooks and pane (Claude Code) | Permission checks for your token and your role in each review |
-| Local R, only for the optional `.R` syntax check | Meta-analyses and figures in R (`outcome_analyze`, `analysis_run`, `rob_plots`) |
+| Local R, only for the optional `.R` syntax check | Meta-analyses and figures in R (`outcome_analyze`, `analysis_run`, `nma_analyze`, `nma_run`, `rob_plots`) |
+| The manuscript check, which reads your `.md` manuscripts and `collie-manuscript.json` offline | |
+| The local feedback log, read only by `feedback.mjs summary` and the `collie-retro` skill | |
+| The optional Zotero bridge, which reads Zotero on `127.0.0.1:23119` when you ask | |
 | Your AI client, which talks to your AI provider | Searches of external databases (PubMed, OpenAlex and others) for the search and explore tools |
 | | The method guides served by `collie_guide` and the help center served by `help_search` |
 | | The audit log of every change, marked as made by a human or by an AI token |
 
-The kit opens network connections to your Collie address only. The session-check hook makes one request to the same address at session start. Apart from `npx` downloading the kit from GitHub, nothing is sent to any other host, and the kit collects no analytics.
+The kit opens network connections to your Collie address only, plus the optional Zotero bridge to Zotero on `127.0.0.1:23119` (your own computer) when you ask for it. The session-check hook makes one request to the Collie address at session start. Apart from `npx` downloading the kit from GitHub, nothing is sent to any other host, and the kit collects no analytics.
 
 ## Human in the loop
 
@@ -87,9 +94,13 @@ Collie's rule is **AI suggests, humans decide**. The kit and the service enforce
 | No token can delete anything. | Collie. Deleting is done by a person in the web app (`token_cannot_delete`). |
 | A connection needs a person to type a code in Collie. A link alone never approves an agent. | Collie, during [`collie_connect`](authentication.md#connect-with-a-code). |
 | Screening suggestions, extraction answers, duplicate verdicts and risk-of-bias assessments are saved as suggestions or drafts that a person accepts, edits or dismisses. | Collie, through the tools `ai_suggest`, `ai_extraction_put`, `duplicates_suggest` and `rob_assess`. |
-| A screening vote by an agent (`screening_decide`) is a real reviewer vote, so Claude Code asks you before each one. | The `human-decides` hook (Claude Code). Other clients show their own tool approval. |
-| Outcome data can only fill empty cells. A person changes saved values in Collie. | Collie, in `outcome_data_put`. |
-| A GRADE judgement can only be saved for an outcome that has none yet (`grade_exists`). | Collie, in `grade_set`. |
+| Voting, accepting, approving and registering are a person's act. An agent token gets `human_decision_required`. | Collie. |
+| A screening vote by an agent (`screening_decide`) is accepted only from a token of scope `reviewer` (an agent set up as a separate reviewer with its own account). It is a real reviewer vote, so Claude Code asks you before each one. | Collie, then the `human-decides` hook (Claude Code). Other clients show their own tool approval. |
+| Outcome data can only fill empty cells, and an agent's rows are drafts that no analysis, GRADE, checklist, export or paper uses until a person approves them. | Collie, in `outcome_data_put`. |
+| A GRADE judgement can only be saved for an outcome that has none yet (`grade_exists`), and it is a draft that the Summary of Findings and the paper ignore until a person approves it. | Collie, in `grade_set`. |
+| An agent writes paper sections as drafts and never overwrites a section a person approved (`section_approved`). | Collie, in `paper_section_put`. |
+| A token expires (`token_expired`); the agent then asks you to connect again. | Collie. |
+| A Collie subagent works only through Collie's tools and local file tools: web, shell, other MCP servers and further agents are blocked. | The `collie-agent-guard` hook (Claude Code), on top of each subagent's tool allow-list. |
 | The screening queue stays empty until duplicates are resolved and the review has inclusion criteria. | The MCP server, in `screening_queue`, from Collie's `ai_status`. |
 | Collie never submits a protocol to PROSPERO. The review team registers it. | Collie, in `protocol_set`. |
 | Every change an agent makes is recorded with the actor `ai`. | Collie's audit log (`audit_log`). |

@@ -1,7 +1,7 @@
 {
   "name": "collie",
-  "version": "0.4.1",
-  "description": "Collie for Claude Code: the full systematic review + meta-analysis workflow over the Collie MCP server (bundled; runs on your own AI plan) — question and viability, protocol (PROSPERO), search, AI screening, extraction, risk of bias, R meta-analysis, GRADE, PRISMA, manuscript and submission. 13 skills, 8 agents, 4 hooks, plus a live Collie pane (/collie). AI suggests, humans decide.",
+  "version": "0.6.0",
+  "description": "Collie for Claude Code: the full systematic review + meta-analysis workflow over the Collie MCP server (bundled; runs on your own AI plan) — question and viability, protocol (PROSPERO), search, AI screening, extraction, risk of bias, R meta-analysis, GRADE, PRISMA, manuscript, submission and a verbatim evidence transcript, a local manuscript check, an improvement retro and a read-only Zotero bridge (local Zotero 7 only). 17 skills, 8 agents, 7 hooks, plus a live Collie pane (/collie). AI suggests, humans decide.",
   "author": { "name": "CollieSR Company", "email": "contact@colliesr.com" },
   "license": "MIT",
   "types": "./types/index.d.ts",

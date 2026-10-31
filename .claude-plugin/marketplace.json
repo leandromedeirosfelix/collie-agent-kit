@@ -5,8 +5,8 @@
   "plugins": [
     {
       "name": "collie",
-      "description": "Systematic review + meta-analysis workflow for Collie: viability, search, AI-assisted screening, extraction, RoB, R meta-analysis, GRADE, PRISMA, manuscript",
-      "version": "0.4.1",
+      "description": "Systematic review + meta-analysis workflow for Collie: viability, search, AI-assisted screening, extraction, RoB, R meta-analysis, GRADE, PRISMA, manuscript, evidence transcript",
+      "version": "0.6.0",
       "source": "./",
       "author": { "name": "CollieSR Company", "email": "contact@colliesr.com" }
     }
